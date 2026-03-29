@@ -1,0 +1,6 @@
+name = "kinetic-api"
+main = "src/index.ts"
+compatibility_date = "2025-03-28"
+
+[vars]
+ENVIRONMENT = "development"
