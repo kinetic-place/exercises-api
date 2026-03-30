@@ -1,104 +1,164 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { getExercises, getEquipment, getMuscleGroups } from './data/loader';
+import {
+  searchExercises,
+  filterExercises,
+  paginate,
+  deriveUniqueValues,
+  type ExerciseFilters,
+} from './data/query';
 
 type Bindings = {
   ENVIRONMENT: string;
+  EXERCISES_BUCKET: R2Bucket;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-// CORS
+// ---------- Middleware ----------
+
 app.use('*', cors());
 
-// Health check
-app.get('/', (c) => {
+// ---------- Health ----------
+
+app.get('/', async (c) => {
+  let exerciseCount = 0;
+  try {
+    const exercises = await getExercises(c.env.EXERCISES_BUCKET);
+    exerciseCount = exercises.length;
+  } catch {
+    // bucket may not be seeded yet
+  }
+
   return c.json({
-    name: 'Kinetic.place API',
+    name: 'Kinetic.place Exercises API',
     version: '0.1.0',
-    docs: 'https://docs.kinetic.place',
     status: 'ok',
+    exercises: exerciseCount,
+    docs: 'https://github.com/kinetic-place/exercises-api',
+    website: 'https://kinetic.place',
   });
 });
 
-// V1 routes placeholder
-app.get('/v1/exercises', (c) => {
-  return c.json({
-    data: [
-      {
-        id: 'barbell-bench-press',
-        name: 'Barbell Bench Press',
-        slug: 'barbell-bench-press',
-        category: 'strength',
-        force: 'push',
-        level: 'intermediate',
-        mechanic: 'compound',
-        equipment: ['barbell', 'flat-bench'],
-        primaryMuscles: ['chest'],
-        secondaryMuscles: ['triceps', 'anterior-deltoid'],
-        premiumContentAvailable: true,
-      },
-    ],
-    total: 1,
-    page: 1,
-    limit: 50,
-  });
+// ---------- Exercises: list / search / filter ----------
+
+app.get('/v1/exercises', async (c) => {
+  const bucket = c.env.EXERCISES_BUCKET;
+
+  try {
+    let exercises = await getExercises(bucket);
+
+    // Search (applied first)
+    const q = c.req.query('q');
+    if (q) {
+      exercises = searchExercises(exercises, q);
+    }
+
+    // Filters
+    const filters: ExerciseFilters = {
+      muscle: c.req.query('muscle'),
+      equipment: c.req.query('equipment'),
+      level: c.req.query('level'),
+      category: c.req.query('category'),
+      force: c.req.query('force'),
+      mechanics: c.req.query('mechanics'),
+      type: c.req.query('type'),
+    };
+
+    // Remove undefined keys
+    for (const key of Object.keys(filters) as (keyof ExerciseFilters)[]) {
+      if (!filters[key]) delete filters[key];
+    }
+
+    if (Object.keys(filters).length > 0) {
+      exercises = filterExercises(exercises, filters);
+    }
+
+    // Paginate
+    const page = parseInt(c.req.query('page') || '1', 10);
+    const limit = parseInt(c.req.query('limit') || '50', 10);
+    const result = paginate(exercises, page, limit);
+
+    c.header('X-Total-Count', String(result.total));
+    return c.json(result);
+  } catch (err: any) {
+    return c.json({ error: err.message, status: 500 }, 500);
+  }
 });
 
-app.get('/v1/exercises/:id', (c) => {
+// ---------- Exercises: get by ID ----------
+
+app.get('/v1/exercises/:id', async (c) => {
   const id = c.req.param('id');
-  return c.json({
-    id,
-    name: 'Barbell Bench Press',
-    slug: 'barbell-bench-press',
-    category: 'strength',
-    force: 'push',
-    level: 'intermediate',
-    mechanic: 'compound',
-    equipment: ['barbell', 'flat-bench'],
-    primaryMuscles: ['chest'],
-    secondaryMuscles: ['triceps', 'anterior-deltoid'],
-    instructions: [
-      'Lie back on a flat bench.',
-      'Using a medium width grip, lift the bar from the rack and hold it straight over you with your arms locked.',
-      'Lower the bar slowly until it touches your middle chest.',
-      'Push the bar back to the starting position as you breathe out.',
-    ],
-    tips: [
-      'Keep your feet flat on the floor.',
-      'Maintain a slight arch in your lower back.',
-      'Do not bounce the bar off your chest.',
-    ],
-    premiumContentAvailable: true,
-    videos: {
-      preview: `https://cdn.kinetic.place/previews/${id}.mp4`,
-    },
-  });
+  const bucket = c.env.EXERCISES_BUCKET;
+
+  try {
+    const exercises = await getExercises(bucket);
+    const exercise = exercises.find((ex) => ex.id === id);
+
+    if (!exercise) {
+      return c.json({ error: 'Exercise not found', status: 404 }, 404);
+    }
+
+    return c.json(exercise);
+  } catch (err: any) {
+    return c.json({ error: err.message, status: 500 }, 500);
+  }
 });
 
-app.get('/v1/muscles', (c) => {
-  return c.json({
-    data: [
-      'chest', 'back', 'shoulders', 'biceps', 'triceps', 'forearms',
-      'quadriceps', 'hamstrings', 'glutes', 'calves', 'abs', 'obliques',
-      'traps', 'lats', 'lower-back', 'hip-flexors', 'adductors', 'abductors',
-    ],
-  });
+// ---------- Muscle Groups ----------
+
+app.get('/v1/muscles', async (c) => {
+  const bucket = c.env.EXERCISES_BUCKET;
+
+  try {
+    const muscleGroups = await getMuscleGroups(bucket);
+    return c.json({ data: muscleGroups, total: muscleGroups.length });
+  } catch (err: any) {
+    return c.json({ error: err.message, status: 500 }, 500);
+  }
 });
 
-app.get('/v1/equipment', (c) => {
-  return c.json({
-    data: [
-      'barbell', 'dumbbell', 'kettlebell', 'cable', 'machine',
-      'bodyweight', 'resistance-band', 'medicine-ball', 'flat-bench',
-      'incline-bench', 'pull-up-bar', 'foam-roller', 'stability-ball',
-    ],
-  });
+// ---------- Equipment ----------
+
+app.get('/v1/equipment', async (c) => {
+  const bucket = c.env.EXERCISES_BUCKET;
+
+  try {
+    const equipment = await getEquipment(bucket);
+    return c.json({ data: equipment, total: equipment.length });
+  } catch (err: any) {
+    return c.json({ error: err.message, status: 500 }, 500);
+  }
 });
 
-app.get('/v1/categories', (c) => {
-  return c.json({
-    data: ['strength', 'cardio', 'flexibility', 'balance', 'plyometrics', 'olympic'],
-  });
+// ---------- Categories ----------
+
+app.get('/v1/categories', async (c) => {
+  const bucket = c.env.EXERCISES_BUCKET;
+
+  try {
+    const exercises = await getExercises(bucket);
+    const categories = deriveUniqueValues(exercises, 'category');
+    return c.json({ data: categories, total: categories.length });
+  } catch (err: any) {
+    return c.json({ error: err.message, status: 500 }, 500);
+  }
+});
+
+// ---------- Difficulty Levels ----------
+
+app.get('/v1/levels', async (c) => {
+  const bucket = c.env.EXERCISES_BUCKET;
+
+  try {
+    const exercises = await getExercises(bucket);
+    const levels = deriveUniqueValues(exercises, 'difficultyLevel');
+    return c.json({ data: levels, total: levels.length });
+  } catch (err: any) {
+    return c.json({ error: err.message, status: 500 }, 500);
+  }
 });
 
 export default app;

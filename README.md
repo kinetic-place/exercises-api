@@ -1,34 +1,299 @@
-# ⚡️ Kinetic Exercises API Engine
+# @kinetic-place/exercises-api
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+A self-hostable REST API for the [Kinetic.place](https://kinetic.place) exercise dataset. **899+ exercises** with search, filtering, and pagination — deploy to your own Cloudflare Workers in minutes.
 
-A blazing-fast, Cloudflare Worker-powered REST API serving the open-source Kinetic Exercise dataset.
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Cloudflare Workers](https://img.shields.io/badge/runs%20on-Cloudflare%20Workers-orange.svg)](https://workers.cloudflare.com)
 
-👉 **[Get your free API Key at kinetic.place](https://kinetic.place)**
+> **Don't want to self-host?** Skip the setup entirely — use the free hosted instance at `https://api.kinetic.place`. Same API, zero configuration.
+
+## Quick Start
+
+```bash
+# Clone and install
+git clone https://github.com/kinetic-place/exercises-api.git
+cd exercises-api
+npm install
+
+# Seed local R2 with exercise data
+npm run seed
+
+# Start the dev server
+npm run dev
+# → http://localhost:8787
+```
+
+## Base URL
+
+```
+Local dev:   http://localhost:8787
+```
+
+## Endpoints
+
+### `GET /`
+
+Health check with dataset stats.
+
+```bash
+curl http://localhost:8787/
+```
+
+```json
+{
+  "name": "Kinetic.place Exercises API",
+  "version": "0.1.0",
+  "status": "ok",
+  "exercises": 899,
+  "docs": "https://github.com/kinetic-place/exercises-api",
+  "website": "https://kinetic.place"
+}
+```
 
 ---
 
-## 🚀 Why open source the API?
+### `GET /v1/exercises`
 
-This repository contains the physical edge-engine powering `api.kinetic.place`. 
+List, search, and filter exercises with pagination.
 
-We open-sourced our API to guarantee total transparency, and to welcome community contributions (e.g., adding comprehensive GraphQL support, advanced caching strategies, or complex filtering by target muscles).
+#### Query Parameters
 
-**Want a zero-setup solution?**
-If you just want to *use* the API to build your app—without the frustrating hassle of setting up Cloudflare Workers, configuring R2 buckets, deploying infrastructure, and paying for bandwidth outages—**[join the developer waitlist at kinetic.place](https://kinetic.place)**. 
+| Parameter   | Type   | Default | Description                                                 |
+| ----------- | ------ | ------- | ----------------------------------------------------------- |
+| `q`         | string | —       | Search exercises by name and instructions                   |
+| `muscle`    | string | —       | Filter by muscle group slug (e.g. `chest`)                  |
+| `equipment` | string | —       | Filter by equipment name (e.g. `barbell`)                   |
+| `level`     | string | —       | Filter by difficulty (`beginner`, `intermediate`, `expert`) |
+| `category`  | string | —       | Filter by category (e.g. `strength`, `cardio`)              |
+| `force`     | string | —       | Filter by force type (`push`, `pull`, `static`)             |
+| `mechanics` | string | —       | Filter by mechanics (`compound`, `isolation`)               |
+| `type`      | string | —       | Filter by exercise type (e.g. `reps`)                       |
+| `page`      | number | 1       | Page number                                                 |
+| `limit`     | number | 50      | Results per page (max 200)                                  |
 
-You'll instantly join the queue for an enterprise-grade, managed API Key.
+#### Examples
 
-## 📦 What can the API do?
-- **Global Edge Delivery**: Sub-50ms latency by fetching compiled datasets from the edge.
-- **Deep Search & Pagination**: Query over 899+ predefined exercises safely and quickly.
-- **Filtering**: Target equipment subsets, muscle isolations, and workout topologies on the fly.
-- **Access to Execution Media (Coming Soon)**: High-quality, compressed GIF and MP4 exercise demonstrations created by real fitness content creators are being added, designed to be fully **brandable and customizable**. **[Join the waitlist at kinetic.place](https://kinetic.place)** to get early API Key access to the premium media CDN!
+```bash
+# All exercises (paginated)
+curl "http://localhost:8787/v1/exercises"
 
-## Self-Hosting
+# Search by name
+curl "http://localhost:8787/v1/exercises?q=bench+press"
 
-*(Detailed Cloudflare Wrangler deployment instructions coming shortly...)*
+# Filter by muscle group
+curl "http://localhost:8787/v1/exercises?muscle=chest"
 
-## 🙏 Acknowledgments
+# Filter by equipment
+curl "http://localhost:8787/v1/exercises?equipment=dumbbell"
 
-A massive thank you to [wrkout/exercises.json](https://github.com/wrkout/exercises.json) for providing the foundational list of gym exercises that kickstarted this dataset!
+# Combined filters
+curl "http://localhost:8787/v1/exercises?muscle=chest&equipment=dumbbell&level=beginner"
+
+# Search + filter
+curl "http://localhost:8787/v1/exercises?q=curl&muscle=biceps"
+
+# Pagination
+curl "http://localhost:8787/v1/exercises?page=2&limit=10"
+```
+
+#### Response
+
+```json
+{
+  "data": [
+    {
+      "id": "d586b5aa-c2f4-4cb5-8038-d10b03c3b763",
+      "name": "Barbell Bench Press",
+      "type": "reps",
+      "difficultyLevel": "intermediate",
+      "forceType": "push",
+      "mechanics": "compound",
+      "category": "strength",
+      "instructions": [
+        "Lie flat on a bench with your feet planted firmly on the floor...",
+        "As you breathe in, slowly lower the bar to your mid-chest..."
+      ],
+      "muscleGroups": [
+        { "id": "...", "slug": "chest", "name": "Chest", "type": "primary" },
+        { "id": "...", "slug": "triceps", "name": "Triceps", "type": "primary" },
+        { "id": "...", "slug": "shoulders", "name": "Shoulders", "type": "primary" }
+      ],
+      "equipment": [
+        {
+          "id": "...",
+          "name": "Barbell",
+          "type": "weight",
+          "usageType": "single",
+          "numItems": null
+        }
+      ]
+    }
+  ],
+  "total": 899,
+  "page": 1,
+  "limit": 50
+}
+```
+
+---
+
+### `GET /v1/exercises/:id`
+
+Get a single exercise by UUID.
+
+```bash
+curl "http://localhost:8787/v1/exercises/d586b5aa-c2f4-4cb5-8038-d10b03c3b763"
+```
+
+Returns the full exercise object (same shape as items in the list response). Returns `404` if not found.
+
+---
+
+### `GET /v1/muscles`
+
+List all muscle groups.
+
+```bash
+curl "http://localhost:8787/v1/muscles"
+```
+
+```json
+{
+  "data": [
+    { "id": "...", "slug": "chest", "name": "Chest" },
+    { "id": "...", "slug": "biceps", "name": "Biceps" }
+  ],
+  "total": 17
+}
+```
+
+---
+
+### `GET /v1/equipment`
+
+List all equipment types.
+
+```bash
+curl "http://localhost:8787/v1/equipment"
+```
+
+```json
+{
+  "data": [
+    { "id": "...", "name": "Barbell", "type": "weight", "usageType": "single" },
+    { "id": "...", "name": "Dumbbell", "type": "weight", "usageType": "double" }
+  ],
+  "total": 36
+}
+```
+
+---
+
+### `GET /v1/categories`
+
+List all exercise categories.
+
+```bash
+curl "http://localhost:8787/v1/categories"
+```
+
+```json
+{
+  "data": [
+    "cardio",
+    "olympicWeightlifting",
+    "plyometrics",
+    "powerlifting",
+    "strength",
+    "stretching",
+    "strongman"
+  ],
+  "total": 7
+}
+```
+
+---
+
+### `GET /v1/levels`
+
+List all difficulty levels.
+
+```bash
+curl "http://localhost:8787/v1/levels"
+```
+
+```json
+{
+  "data": ["beginner", "expert", "intermediate"],
+  "total": 3
+}
+```
+
+---
+
+## Exercise Schema
+
+```typescript
+interface Exercise {
+  id: string; // UUID
+  name: string | null; // Localized name
+  type: string; // "reps" | "time" | "distance"
+  difficultyLevel: string | null; // "beginner" | "intermediate" | "expert"
+  forceType: string | null; // "push" | "pull" | "static"
+  mechanics: string | null; // "compound" | "isolation"
+  category: string | null; // "strength" | "cardio" | etc.
+  instructions: string[] | null; // Step-by-step coaching cues
+  muscleGroups: ExerciseMuscleGroup[];
+  equipment: ExerciseEquipment[];
+}
+
+interface ExerciseMuscleGroup {
+  id: string;
+  slug: string; // e.g. "chest", "biceps"
+  name: string | null; // e.g. "Chest", "Biceps"
+  type: 'primary' | 'secondary' | 'tertiary' | null;
+}
+
+interface ExerciseEquipment {
+  id: string;
+  name: string | null; // e.g. "Barbell", "Dumbbell"
+  type: string; // "weight" | "resistance"
+  usageType: string | null; // "single" | "double" | "multiple"
+  numItems: number | null;
+}
+```
+
+## Deploy to Your Own Cloudflare
+
+Deploy this API to your own Cloudflare Workers account:
+
+```bash
+# 1. Create an R2 bucket
+npx wrangler r2 bucket create kinetic-exercises
+
+# 2. Deploy the Worker
+npm run deploy
+
+# 3. Seed your production R2 bucket
+npm run seed:remote
+```
+
+Your API will be live at the URL Cloudflare assigns (e.g. `https://kinetic-api.<you>.workers.dev`).
+
+> **Or use the hosted version** — if you don't want to manage infrastructure, the Kinetic.place team maintains a free hosted instance at `https://api.kinetic.place` with the same dataset and endpoints.
+
+## Related Packages
+
+- [`@kinetic-place/exercises-json`](https://github.com/kinetic-place/exercises-json) — raw JSON dataset (899+ exercises, EN/ES)
+- [`@kinetic-place/exercises-db`](https://github.com/kinetic-place/exercises-db) — database-ready exercise data
+
+## Coming Soon
+
+- 🔑 **API key authentication** with tiered rate limits
+- 🌐 **Multi-locale support** (`?locale=es`)
+- 🎬 **Video content endpoints** (waitlist-gated)
+- 📦 **TypeScript SDK** (`@kinetic-place/sdk`)
+
+## License
+
+MIT © [Kinetic.place](https://kinetic.place)

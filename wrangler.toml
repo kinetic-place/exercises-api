@@ -4,3 +4,7 @@ compatibility_date = "2025-03-28"
 
 [vars]
 ENVIRONMENT = "development"
+
+[[r2_buckets]]
+binding = "EXERCISES_BUCKET"
+bucket_name = "kinetic-exercises"

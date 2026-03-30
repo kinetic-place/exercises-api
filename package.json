@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "seed": "tsx scripts/seed.ts",
+    "seed:remote": "tsx scripts/seed.ts --remote",
     "build": "wrangler deploy --dry-run",
     "deploy": "wrangler deploy"
   },
@@ -13,6 +15,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250327.0",
+    "tsx": "^4.21.0",
     "wrangler": "^4.5.0",
     "typescript": "^5.7.0"
   }
