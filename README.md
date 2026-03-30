@@ -282,6 +282,35 @@ Your API will be live at the URL Cloudflare assigns (e.g. `https://kinetic-api.<
 
 > **Or use the hosted version** — if you don't want to manage infrastructure, the Kinetic.place team maintains a free hosted instance at `https://api.kinetic.place` with the same dataset and endpoints.
 
+## Adding Authentication (Optional)
+
+This API ships with **no authentication** by default. If you want to add API key protection, use the built-in `createAuthMiddleware` with your own key validator:
+
+```typescript
+import { Hono } from 'hono';
+import { createAuthMiddleware } from '@kinetic-place/exercises-api/middleware/auth';
+
+const app = new Hono();
+
+// Bring your own validator — any async function that returns tier info
+app.use('/v1/*', createAuthMiddleware({
+  validateKey: async (key) => {
+    const user = await myDatabase.findByApiKey(key);
+    if (!user) return null;
+    return { tier: user.plan, email: user.email };
+  },
+  invalidKeyHint: 'Get a key at https://yourdomain.com',
+}));
+```
+
+The middleware handles:
+- Key extraction from `X-API-Key` header, `Authorization: Bearer` header, or `?api_key=` query param
+- Rate-limit response headers (`X-RateLimit-Limit`, `X-RateLimit-Tier`)
+- `401 Unauthorized` for invalid keys
+- Unauthenticated requests get `public` tier (50 req/day default)
+
+**Tier defaults:** `public` (50/day), `free` (500/day), `waitlist` (2,000/day), `admin` (100,000/day). Override with `rateLimits` option.
+
 ## Related Packages
 
 - [`@kinetic-place/exercises-json`](https://github.com/kinetic-place/exercises-json) — raw JSON dataset (899+ exercises, EN/ES)
@@ -289,7 +318,6 @@ Your API will be live at the URL Cloudflare assigns (e.g. `https://kinetic-api.<
 
 ## Coming Soon
 
-- 🔑 **API key authentication** with tiered rate limits
 - 🌐 **Multi-locale support** (`?locale=es`)
 - 🎬 **Video content endpoints** (waitlist-gated)
 - 📦 **TypeScript SDK** (`@kinetic-place/sdk`)
@@ -297,3 +325,4 @@ Your API will be live at the URL Cloudflare assigns (e.g. `https://kinetic-api.<
 ## License
 
 MIT © [Kinetic.place](https://kinetic.place)
+

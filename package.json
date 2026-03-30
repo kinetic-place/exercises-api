@@ -3,6 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./middleware/auth": "./src/middleware/auth.ts",
+    "./data/loader": "./src/data/loader.ts",
+    "./data/query": "./src/data/query.ts",
+    "./types": "./src/types.ts"
+  },
   "scripts": {
     "dev": "wrangler dev",
     "seed": "tsx scripts/seed.ts",
