@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const isRemote = process.argv.includes('--remote');
-const localFlag = isRemote ? '' : '--local';
+const persistFlag = isRemote ? '--remote' : '--local';
 
 const JSON_PACKAGE = path.resolve(__dirname, '../../exercises-json');
 
@@ -41,7 +41,7 @@ for (const locale of LOCALES) {
 
     try {
       execSync(
-        `npx wrangler r2 object put "${BUCKET}/${key}" --file "${filePath}" --content-type "application/json" ${localFlag}`,
+        `npx wrangler r2 object put "${BUCKET}/${key}" --file "${filePath}" --content-type "application/json" ${persistFlag}`,
         { cwd: path.resolve(__dirname, '..'), stdio: 'pipe' }
       );
       uploaded++;
