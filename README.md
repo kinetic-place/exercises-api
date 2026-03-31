@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://kinetic.place">
+    <img src="https://kinetic.place/images/kinetic-logo-animated.gif" alt="Kinetic.place" width="400" />
+  </a>
+</p>
+
 # @kinetic-place/exercises-api
 
 A self-hostable REST API for the [Kinetic.place](https://kinetic.place) exercise dataset. **899+ exercises** with search, filtering, and pagination — deploy to your own Cloudflare Workers in minutes.
