@@ -239,35 +239,73 @@ curl "http://localhost:8787/v1/levels"
 
 ## Exercise Schema
 
-```typescript
-interface Exercise {
-  id: string; // UUID
-  name: string | null; // Localized name
-  type: string; // "reps" | "time" | "distance"
-  difficultyLevel: string | null; // "beginner" | "intermediate" | "expert"
-  forceType: string | null; // "push" | "pull" | "static"
-  mechanics: string | null; // "compound" | "isolation"
-  category: string | null; // "strength" | "cardio" | etc.
-  instructions: string[] | null; // Step-by-step coaching cues
-  muscleGroups: ExerciseMuscleGroup[];
-  equipment: ExerciseEquipment[];
-}
+### Exercise Object
 
-interface ExerciseMuscleGroup {
-  id: string;
-  slug: string; // e.g. "chest", "biceps"
-  name: string | null; // e.g. "Chest", "Biceps"
-  type: 'primary' | 'secondary' | 'tertiary' | null;
-}
-
-interface ExerciseEquipment {
-  id: string;
-  name: string | null; // e.g. "Barbell", "Dumbbell"
-  type: string; // "weight" | "resistance"
-  usageType: string | null; // "single" | "double" | "multiple"
-  numItems: number | null;
+```json
+{
+  "id": "d586b5aa-c2f4-4cb5-8038-d10b03c3b763",
+  "name": "Barbell Bench Press",
+  "type": "reps",
+  "difficultyLevel": "intermediate",
+  "forceType": "push",
+  "mechanics": "compound",
+  "category": "strength",
+  "instructions": [
+    "Lie flat on a bench with your feet planted firmly on the floor...",
+    "As you breathe in, slowly lower the bar to your mid-chest..."
+  ],
+  "muscleGroups": [
+    { "id": "...", "slug": "chest", "name": "Chest", "type": "primary" },
+    { "id": "...", "slug": "triceps", "name": "Triceps", "type": "primary" }
+  ],
+  "equipment": [
+    { "id": "...", "name": "Barbell", "type": "weight", "usageType": "single", "numItems": null }
+  ]
 }
 ```
+
+### Field Reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | UUID — stable across versions |
+| `name` | `string \| null` | Exercise name (localized) |
+| `type` | `string` | Measurement type: `reps`, `time`, or `distance` |
+| `difficultyLevel` | `string \| null` | `beginner`, `intermediate`, or `expert` |
+| `forceType` | `string \| null` | Primary force: `push`, `pull`, or `static` |
+| `mechanics` | `string \| null` | Movement type: `compound` or `isolation` |
+| `category` | `string \| null` | Exercise category (see values below) |
+| `instructions` | `string[] \| null` | Step-by-step coaching cues |
+| `muscleGroups` | `MuscleGroup[]` | Muscles targeted with role classification |
+| `equipment` | `Equipment[]` | Required equipment |
+
+**Categories:** `strength` · `stretching` · `cardio` · `plyometrics` · `powerlifting` · `olympicWeightlifting` · `strongman`
+
+**Difficulty levels:** `beginner` · `intermediate` · `expert`
+
+### Muscle Group Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | UUID |
+| `slug` | `string` | URL-safe identifier (e.g., `chest`, `biceps`) |
+| `name` | `string \| null` | Display name (e.g., `Chest`, `Biceps`) |
+| `type` | `string \| null` | Targeting: `primary`, `secondary`, or `tertiary` |
+
+**17 muscle groups:** abdominals · abductors · adductors · biceps · calves · chest · forearms · glutes · hamstrings · lats · lower back · middle back · neck · quadriceps · shoulders · traps · triceps
+
+### Equipment Object
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | UUID |
+| `name` | `string \| null` | Equipment name (e.g., `Barbell`, `Dumbbell`) |
+| `type` | `string` | `weight` or `resistance` |
+| `usageType` | `string \| null` | `single`, `double`, or `multiple` |
+| `numItems` | `number \| null` | Number of items needed (if applicable) |
+
+**36 equipment types** including: Barbell · Dumbbell · Cable · Machine · Body Only · Kettlebell · Bands · Medicine Ball · Exercise Ball · and more.
+
 
 ## Deploy to Your Own Cloudflare
 
