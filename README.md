@@ -366,7 +366,12 @@ The middleware handles:
 - 🎬 **Video content endpoints** (waitlist-gated)
 - 📦 **TypeScript SDK** (`@kinetic-place/sdk`)
 
+## 🚀 Building a Fitness App?
+
+This API is part of [**Kinetic.place**](https://kinetic.place) — the open platform for developers and fitness creators. Whether you're building a workout tracker, a coaching app, or creating fitness content, Kinetic provides the data, APIs, and tools to ship faster.
+
+👉 **[kinetic.place](https://kinetic.place)** — Exercises, APIs, and content for fitness builders.
+
 ## License
 
 MIT © [Kinetic.place](https://kinetic.place)
-
