@@ -1,4 +1,4 @@
-name = "kinetic-api"
+name = "kinetic-exercises-api"
 main = "src/index.ts"
 compatibility_date = "2025-03-28"
 

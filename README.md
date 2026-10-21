@@ -322,7 +322,7 @@ npm run deploy
 npm run seed:remote
 ```
 
-Your API will be live at the URL Cloudflare assigns (e.g. `https://kinetic-api.<you>.workers.dev`).
+Your API will be live at the URL Cloudflare assigns (e.g. `https://kinetic-exercises-api.<you>.workers.dev`).
 
 > **Or use the hosted version** — if you don't want to manage infrastructure, the Kinetic.place team maintains a free hosted instance at `https://api.kinetic.place` with the same dataset and endpoints.
 
