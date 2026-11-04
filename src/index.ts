@@ -1,6 +1,13 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { getExercises, getEquipment, getMuscleGroups } from './data/loader';
+import {
+  getExercises,
+  getEquipment,
+  getGuides,
+  getMuscleGroups,
+  LANGS,
+  parseLang,
+} from './data/loader';
 import {
   searchExercises,
   filterExercises,
@@ -33,7 +40,7 @@ app.get('/', async (c) => {
 
   return c.json({
     name: 'Kinetic.place Exercises API',
-    version: '0.1.0',
+    version: '0.2.0',
     status: 'ok',
     exercises: exerciseCount,
     docs: 'https://github.com/kinetic-place/exercises-api',
@@ -102,6 +109,35 @@ app.get('/v1/exercises/:id', async (c) => {
     }
 
     return c.json(exercise);
+  } catch (err: any) {
+    return c.json({ error: err.message, status: 500 }, 500);
+  }
+});
+
+// ---------- Exercises: guide ----------
+
+// Setup, steps, cues, mistakes and alternatives, in English (default) or ?lang=es.
+app.get('/v1/exercises/:id/guide', async (c) => {
+  const id = c.req.param('id');
+  const lang = parseLang(c.req.query('lang'));
+  const bucket = c.env.EXERCISES_BUCKET;
+
+  if (!lang) {
+    return c.json({ error: `lang must be one of: ${LANGS.join(', ')}`, status: 400 }, 400);
+  }
+
+  try {
+    const exercises = await getExercises(bucket);
+    if (!exercises.some((ex) => ex.id === id)) {
+      return c.json({ error: 'Exercise not found', status: 404 }, 404);
+    }
+
+    const guide = (await getGuides(bucket, lang)).get(id);
+    if (!guide) {
+      return c.json({ error: 'This exercise has no guide yet', status: 404 }, 404);
+    }
+
+    return c.json(guide);
   } catch (err: any) {
     return c.json({ error: err.message, status: 500 }, 500);
   }

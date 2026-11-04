@@ -19,7 +19,7 @@ const persistFlag = isRemote ? '--remote' : '--local';
 const JSON_PACKAGE = path.resolve(__dirname, '../../exercises-json');
 
 const LOCALES = ['en', 'es'];
-const FILES = ['exercises.json', 'equipment.json', 'muscle_groups.json'];
+const FILES = ['exercises.json', 'equipment.json', 'muscle_groups.json', 'guides.json'];
 
 const BUCKET = 'kinetic-exercises';
 

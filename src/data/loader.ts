@@ -23,6 +23,7 @@ export interface Equipment {
   name: string | null;
   type: string;
   usageType: string | null;
+  family: string | null;
 }
 
 export interface ExerciseEquipment extends Equipment {
@@ -32,6 +33,7 @@ export interface ExerciseEquipment extends Equipment {
 export interface Exercise {
   id: string;
   name: string | null;
+  slug: string | null;
   type: string;
   difficultyLevel: string | null;
   forceType: string | null;
@@ -42,12 +44,50 @@ export interface Exercise {
   equipment: ExerciseEquipment[];
 }
 
+/** Another exercise a guide points to, and why it fits. */
+export interface ExerciseLink {
+  exerciseId: string;
+  name: string | null;
+  reason: string;
+}
+
+/** How to do one exercise, in one language (`<lang>/guides.json`). */
+export interface ExerciseGuide {
+  exerciseId: string;
+  summary: string;
+  whyItWorks: string;
+  setup: string[];
+  execution: string[];
+  formCues: string[];
+  breathing: string | null;
+  commonMistakes: { mistake: string; correction: string }[];
+  programmingNotes: string[];
+  safetyNotes: string[];
+  faq: { question: string; answer: string }[];
+  alternatives: ExerciseLink[];
+  easierVariations: ExerciseLink[];
+  harderVariations: ExerciseLink[];
+}
+
+// ---------- Languages ----------
+
+export const LANGS = ['en', 'es'] as const;
+export type Lang = (typeof LANGS)[number];
+
+/** The `lang` query parameter: English when absent, null when it isn't one of LANGS. */
+export function parseLang(value: string | undefined): Lang | null {
+  if (!value) return 'en';
+  const lang = value.toLowerCase();
+  return (LANGS as readonly string[]).includes(lang) ? (lang as Lang) : null;
+}
+
 // ---------- Cache ----------
 
 const cache = {
   exercises: null as Exercise[] | null,
   equipment: null as Equipment[] | null,
   muscleGroups: null as MuscleGroup[] | null,
+  guides: new Map<Lang, Map<string, ExerciseGuide>>(),
 };
 
 // ---------- Loaders ----------
@@ -79,4 +119,15 @@ export async function getMuscleGroups(bucket: R2Bucket): Promise<MuscleGroup[]> 
     cache.muscleGroups = await loadJson<MuscleGroup[]>(bucket, 'en/muscle_groups.json');
   }
   return cache.muscleGroups;
+}
+
+/** One language's guides, by exercise ID. Not every exercise has one. */
+export async function getGuides(bucket: R2Bucket, lang: Lang): Promise<Map<string, ExerciseGuide>> {
+  let guides = cache.guides.get(lang);
+  if (!guides) {
+    const list = await loadJson<ExerciseGuide[]>(bucket, `${lang}/guides.json`);
+    guides = new Map(list.map((guide) => [guide.exerciseId, guide]));
+    cache.guides.set(lang, guides);
+  }
+  return guides;
 }

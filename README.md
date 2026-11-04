@@ -6,7 +6,7 @@
 
 # @kinetic-place/exercises-api
 
-A self-hostable REST API for the [Kinetic.place](https://kinetic.place) exercise dataset. **899+ exercises** with search, filtering, and pagination — deploy to your own Cloudflare Workers in minutes.
+A self-hostable REST API for the [Kinetic.place](https://kinetic.place) exercise dataset. **908 exercises** with search, filtering, pagination, and step-by-step guides in English and Spanish — deploy to your own Cloudflare Workers in minutes.
 
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Cloudflare Workers](https://img.shields.io/badge/runs%20on-Cloudflare%20Workers-orange.svg)](https://workers.cloudflare.com)
@@ -48,9 +48,9 @@ curl http://localhost:8787/
 ```json
 {
   "name": "Kinetic.place Exercises API",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "status": "ok",
-  "exercises": 899,
+  "exercises": 908,
   "docs": "https://github.com/kinetic-place/exercises-api",
   "website": "https://kinetic.place"
 }
@@ -110,6 +110,7 @@ curl "http://localhost:8787/v1/exercises?page=2&limit=10"
     {
       "id": "d586b5aa-c2f4-4cb5-8038-d10b03c3b763",
       "name": "Barbell Bench Press",
+      "slug": "barbell-bench-press",
       "type": "reps",
       "difficultyLevel": "intermediate",
       "forceType": "push",
@@ -130,12 +131,13 @@ curl "http://localhost:8787/v1/exercises?page=2&limit=10"
           "name": "Barbell",
           "type": "weight",
           "usageType": "single",
+          "family": "barbell",
           "numItems": null
         }
       ]
     }
   ],
-  "total": 899,
+  "total": 908,
   "page": 1,
   "limit": 50
 }
@@ -152,6 +154,42 @@ curl "http://localhost:8787/v1/exercises/d586b5aa-c2f4-4cb5-8038-d10b03c3b763"
 ```
 
 Returns the full exercise object (same shape as items in the list response). Returns `404` if not found.
+
+---
+
+### `GET /v1/exercises/:id/guide`
+
+How to do an exercise: setup, steps, form cues, breathing, common mistakes, programming notes, safety notes, FAQ, and links to alternatives and to easier and harder variations. 814 of the 908 exercises have one.
+
+| Parameter | Type   | Default | Description                         |
+| --------- | ------ | ------- | ----------------------------------- |
+| `lang`    | string | `en`    | Language of the guide: `en` or `es` |
+
+```bash
+curl "http://localhost:8787/v1/exercises/605ab3e8-4491-4737-aa22-f06598adadf5/guide?lang=es"
+```
+
+```json
+{
+  "exerciseId": "605ab3e8-4491-4737-aa22-f06598adadf5",
+  "summary": "...",
+  "setup": ["..."],
+  "execution": ["..."],
+  "formCues": ["..."],
+  "commonMistakes": [{ "mistake": "...", "correction": "..." }],
+  "alternatives": [
+    { "exerciseId": "486e1ee3-...", "name": "Sentadilla con Mancuerna", "reason": "..." }
+  ],
+  "easierVariations": [
+    { "exerciseId": "bd6fc10e-...", "name": "Sentadilla Goblet", "reason": "..." }
+  ],
+  "harderVariations": [
+    { "exerciseId": "b24c2cec-...", "name": "Sentadilla Frontal con Barra", "reason": "..." }
+  ]
+}
+```
+
+Every field is described in [`exercises-json`'s README](https://github.com/kinetic-place/exercises-json#-exercise-guides). Returns `404` when the exercise doesn't exist or has no guide yet, and `400` for another `lang`. Guides are general guidance, not medical advice.
 
 ---
 
@@ -186,10 +224,22 @@ curl "http://localhost:8787/v1/equipment"
 ```json
 {
   "data": [
-    { "id": "...", "name": "Barbell", "type": "weight", "usageType": "single" },
-    { "id": "...", "name": "Dumbbell", "type": "weight", "usageType": "double" }
+    {
+      "id": "...",
+      "name": "Barbell",
+      "type": "weight",
+      "usageType": "single",
+      "family": "barbell"
+    },
+    {
+      "id": "...",
+      "name": "Dumbbell",
+      "type": "weight",
+      "usageType": "double",
+      "family": "dumbbell"
+    }
   ],
-  "total": 36
+  "total": 44
 }
 ```
 
@@ -245,6 +295,7 @@ curl "http://localhost:8787/v1/levels"
 {
   "id": "d586b5aa-c2f4-4cb5-8038-d10b03c3b763",
   "name": "Barbell Bench Press",
+  "slug": "barbell-bench-press",
   "type": "reps",
   "difficultyLevel": "intermediate",
   "forceType": "push",
@@ -259,25 +310,33 @@ curl "http://localhost:8787/v1/levels"
     { "id": "...", "slug": "triceps", "name": "Triceps", "type": "primary" }
   ],
   "equipment": [
-    { "id": "...", "name": "Barbell", "type": "weight", "usageType": "single", "numItems": null }
+    {
+      "id": "...",
+      "name": "Barbell",
+      "type": "weight",
+      "usageType": "single",
+      "family": "barbell",
+      "numItems": null
+    }
   ]
 }
 ```
 
 ### Field Reference
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | `string` | UUID — stable across versions |
-| `name` | `string \| null` | Exercise name (localized) |
-| `type` | `string` | Measurement type: `reps`, `time`, or `distance` |
-| `difficultyLevel` | `string \| null` | `beginner`, `intermediate`, or `expert` |
-| `forceType` | `string \| null` | Primary force: `push`, `pull`, or `static` |
-| `mechanics` | `string \| null` | Movement type: `compound` or `isolation` |
-| `category` | `string \| null` | Exercise category (see values below) |
-| `instructions` | `string[] \| null` | Step-by-step coaching cues |
-| `muscleGroups` | `MuscleGroup[]` | Muscles targeted with role classification |
-| `equipment` | `Equipment[]` | Required equipment |
+| Field             | Type               | Description                                                                                                     |
+| ----------------- | ------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `id`              | `string`           | UUID — stable across versions                                                                                   |
+| `name`            | `string \| null`   | Exercise name (localized)                                                                                       |
+| `slug`            | `string \| null`   | URL-safe identifier (e.g., `barbell-bench-press`), the same in every language                                   |
+| `type`            | `string`           | Measurement type: `reps`, `time`, or `distance`                                                                 |
+| `difficultyLevel` | `string \| null`   | `beginner`, `intermediate`, or `expert`                                                                         |
+| `forceType`       | `string \| null`   | Primary force: `push`, `pull`, or `static`                                                                      |
+| `mechanics`       | `string \| null`   | Movement type: `compound` or `isolation`                                                                        |
+| `category`        | `string \| null`   | Exercise category (see values below)                                                                            |
+| `instructions`    | `string[] \| null` | Step-by-step text from the original dataset. Kept for compatibility; prefer the guide's `setup` and `execution` |
+| `muscleGroups`    | `MuscleGroup[]`    | Muscles targeted with role classification                                                                       |
+| `equipment`       | `Equipment[]`      | Required equipment                                                                                              |
 
 **Categories:** `strength` · `stretching` · `cardio` · `plyometrics` · `powerlifting` · `olympicWeightlifting` · `strongman`
 
@@ -285,27 +344,27 @@ curl "http://localhost:8787/v1/levels"
 
 ### Muscle Group Object
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | `string` | UUID |
-| `slug` | `string` | URL-safe identifier (e.g., `chest`, `biceps`) |
-| `name` | `string \| null` | Display name (e.g., `Chest`, `Biceps`) |
+| Field  | Type             | Description                                      |
+| ------ | ---------------- | ------------------------------------------------ |
+| `id`   | `string`         | UUID                                             |
+| `slug` | `string`         | URL-safe identifier (e.g., `chest`, `biceps`)    |
+| `name` | `string \| null` | Display name (e.g., `Chest`, `Biceps`)           |
 | `type` | `string \| null` | Targeting: `primary`, `secondary`, or `tertiary` |
 
 **17 muscle groups:** abdominals · abductors · adductors · biceps · calves · chest · forearms · glutes · hamstrings · lats · lower back · middle back · neck · quadriceps · shoulders · traps · triceps
 
 ### Equipment Object
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | `string` | UUID |
-| `name` | `string \| null` | Equipment name (e.g., `Barbell`, `Dumbbell`) |
-| `type` | `string` | `weight` or `resistance` |
-| `usageType` | `string \| null` | `single`, `double`, or `multiple` |
-| `numItems` | `number \| null` | Number of items needed (if applicable) |
+| Field       | Type             | Description                                                                           |
+| ----------- | ---------------- | ------------------------------------------------------------------------------------- |
+| `id`        | `string`         | UUID                                                                                  |
+| `name`      | `string \| null` | Equipment name (e.g., `Barbell`, `Dumbbell`)                                          |
+| `type`      | `string`         | `weight` or `resistance`                                                              |
+| `usageType` | `string \| null` | `single`, `double`, or `multiple`                                                     |
+| `family`    | `string \| null` | Broad kind: `barbell`, `dumbbell`, `bench`, `rack`, `bands`, `balls`, `bodyweight`, … |
+| `numItems`  | `number \| null` | Number of items needed (if applicable)                                                |
 
-**36 equipment types** including: Barbell · Dumbbell · Cable · Machine · Body Only · Kettlebell · Bands · Medicine Ball · Exercise Ball · and more.
-
+**44 equipment types** including: Barbell · Dumbbell · Cable · Machine · Body Only · Kettlebell · Bands · Bench · Squat Rack · Plyo Box · and more.
 
 ## Deploy to Your Own Cloudflare
 
@@ -337,17 +396,21 @@ import { createAuthMiddleware } from '@kinetic-place/exercises-api/middleware/au
 const app = new Hono();
 
 // Bring your own validator — any async function that returns tier info
-app.use('/v1/*', createAuthMiddleware({
-  validateKey: async (key) => {
-    const user = await myDatabase.findByApiKey(key);
-    if (!user) return null;
-    return { tier: user.plan, email: user.email };
-  },
-  invalidKeyHint: 'Get a key at https://yourdomain.com',
-}));
+app.use(
+  '/v1/*',
+  createAuthMiddleware({
+    validateKey: async (key) => {
+      const user = await myDatabase.findByApiKey(key);
+      if (!user) return null;
+      return { tier: user.plan, email: user.email };
+    },
+    invalidKeyHint: 'Get a key at https://yourdomain.com',
+  })
+);
 ```
 
 The middleware handles:
+
 - Key extraction from `X-API-Key` header, `Authorization: Bearer` header, or `?api_key=` query param
 - Rate-limit response headers (`X-RateLimit-Limit`, `X-RateLimit-Tier`)
 - `401 Unauthorized` for invalid keys
@@ -357,7 +420,7 @@ The middleware handles:
 
 ## Related Packages
 
-- [`@kinetic-place/exercises-json`](https://github.com/kinetic-place/exercises-json) — raw JSON dataset (899+ exercises, EN/ES)
+- [`@kinetic-place/exercises-json`](https://github.com/kinetic-place/exercises-json) — raw JSON dataset (908 exercises and 814 guides, EN/ES)
 - [`@kinetic-place/exercises-db`](https://github.com/kinetic-place/exercises-db) — database-ready exercise data
 
 ## Coming Soon
