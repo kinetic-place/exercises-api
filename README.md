@@ -6,7 +6,7 @@
 
 # @kinetic-place/exercises-api
 
-A self-hostable REST API for the [Kinetic.place](https://kinetic.place) exercise dataset. **908 exercises** with search, filtering, pagination, and step-by-step guides in English and Spanish — deploy to your own Cloudflare Workers in minutes.
+A self-hostable REST API for the [Kinetic.place](https://kinetic.place) exercise dataset. **908 exercises** with search, filtering, pagination, step-by-step guides and YouTube videos in English and Spanish — deploy to your own Cloudflare Workers in minutes.
 
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Cloudflare Workers](https://img.shields.io/badge/runs%20on-Cloudflare%20Workers-orange.svg)](https://workers.cloudflare.com)
@@ -318,25 +318,34 @@ curl "http://localhost:8787/v1/levels"
       "family": "barbell",
       "numItems": null
     }
-  ]
+  ],
+  "youtube": {
+    "url": "https://www.youtube.com/watch?v=hWbUlkb5Ms4",
+    "videoId": "hWbUlkb5Ms4",
+    "title": "How To Bench Press With Perfect Technique (5 Steps)",
+    "channel": "Jeff Nippard",
+    "channelUrl": "https://www.youtube.com/@JeffNippard",
+    "thumbnailUrl": "https://i.ytimg.com/vi/hWbUlkb5Ms4/hqdefault.jpg"
+  }
 }
 ```
 
 ### Field Reference
 
-| Field             | Type               | Description                                                                                                     |
-| ----------------- | ------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `id`              | `string`           | UUID — stable across versions                                                                                   |
-| `name`            | `string \| null`   | Exercise name (localized)                                                                                       |
-| `slug`            | `string \| null`   | URL-safe identifier (e.g., `barbell-bench-press`), the same in every language                                   |
-| `type`            | `string`           | Measurement type: `reps`, `time`, or `distance`                                                                 |
-| `difficultyLevel` | `string \| null`   | `beginner`, `intermediate`, or `expert`                                                                         |
-| `forceType`       | `string \| null`   | Primary force: `push`, `pull`, or `static`                                                                      |
-| `mechanics`       | `string \| null`   | Movement type: `compound` or `isolation`                                                                        |
-| `category`        | `string \| null`   | Exercise category (see values below)                                                                            |
-| `instructions`    | `string[] \| null` | Step-by-step text from the original dataset. Kept for compatibility; prefer the guide's `setup` and `execution` |
-| `muscleGroups`    | `MuscleGroup[]`    | Muscles targeted with role classification                                                                       |
-| `equipment`       | `Equipment[]`      | Required equipment                                                                                              |
+| Field             | Type                   | Description                                                                                                                                                                                    |
+| ----------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | `string`               | UUID — stable across versions                                                                                                                                                                  |
+| `name`            | `string \| null`       | Exercise name (localized)                                                                                                                                                                      |
+| `slug`            | `string \| null`       | URL-safe identifier (e.g., `barbell-bench-press`), the same in every language                                                                                                                  |
+| `type`            | `string`               | Measurement type: `reps`, `time`, or `distance`                                                                                                                                                |
+| `difficultyLevel` | `string \| null`       | `beginner`, `intermediate`, or `expert`                                                                                                                                                        |
+| `forceType`       | `string \| null`       | Primary force: `push`, `pull`, or `static`                                                                                                                                                     |
+| `mechanics`       | `string \| null`       | Movement type: `compound` or `isolation`                                                                                                                                                       |
+| `category`        | `string \| null`       | Exercise category (see values below)                                                                                                                                                           |
+| `instructions`    | `string[] \| null`     | Step-by-step text from the original dataset. Kept for compatibility; prefer the guide's `setup` and `execution`                                                                                |
+| `muscleGroups`    | `MuscleGroup[]`        | Muscles targeted with role classification                                                                                                                                                      |
+| `equipment`       | `Equipment[]`          | Required equipment                                                                                                                                                                             |
+| `youtube`         | `YouTubeVideo \| null` | A YouTube video: `url`, `videoId`, `title`, `channel`, `channelUrl`, `thumbnailUrl` ([details](https://github.com/kinetic-place/exercises-json#youtube-video-object)). `null` when it has none |
 
 **Categories:** `strength` · `stretching` · `cardio` · `plyometrics` · `powerlifting` · `olympicWeightlifting` · `strongman`
 

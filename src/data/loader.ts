@@ -42,6 +42,17 @@ export interface Exercise {
   instructions: string[] | null;
   muscleGroups: ExerciseMuscleGroup[];
   equipment: ExerciseEquipment[];
+  youtube: YouTubeVideo | null;
+}
+
+/** A YouTube video of the exercise, with the title, channel and thumbnail YouTube gives for it. */
+export interface YouTubeVideo {
+  url: string;
+  videoId: string;
+  title: string;
+  channel: string;
+  channelUrl: string;
+  thumbnailUrl: string;
 }
 
 /** Another exercise a guide points to, and why it fits. */

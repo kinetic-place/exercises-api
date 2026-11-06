@@ -40,7 +40,7 @@ app.get('/', async (c) => {
 
   return c.json({
     name: 'Kinetic.place Exercises API',
-    version: '0.2.0',
+    version: '0.3.0',
     status: 'ok',
     exercises: exerciseCount,
     docs: 'https://github.com/kinetic-place/exercises-api',
