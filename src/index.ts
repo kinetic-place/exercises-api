@@ -15,6 +15,7 @@ import {
   deriveUniqueValues,
   type ExerciseFilters,
 } from './data/query';
+import { withPage } from './page';
 
 type Bindings = {
   ENVIRONMENT: string;
@@ -40,7 +41,7 @@ app.get('/', async (c) => {
 
   return c.json({
     name: 'Kinetic.place Exercises API',
-    version: '0.3.0',
+    version: '0.4.0',
     status: 'ok',
     exercises: exerciseCount,
     docs: 'https://github.com/kinetic-place/exercises-api',
@@ -88,7 +89,7 @@ app.get('/v1/exercises', async (c) => {
     const result = paginate(exercises, page, limit);
 
     c.header('X-Total-Count', String(result.total));
-    return c.json(result);
+    return c.json({ ...result, data: result.data.map(withPage) });
   } catch (err: any) {
     return c.json({ error: err.message, status: 500 }, 500);
   }
@@ -108,7 +109,7 @@ app.get('/v1/exercises/:id', async (c) => {
       return c.json({ error: 'Exercise not found', status: 404 }, 404);
     }
 
-    return c.json(exercise);
+    return c.json(withPage(exercise));
   } catch (err: any) {
     return c.json({ error: err.message, status: 500 }, 500);
   }

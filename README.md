@@ -48,7 +48,7 @@ curl http://localhost:8787/
 ```json
 {
   "name": "Kinetic.place Exercises API",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "status": "ok",
   "exercises": 908,
   "docs": "https://github.com/kinetic-place/exercises-api",
@@ -134,7 +134,10 @@ curl "http://localhost:8787/v1/exercises?page=2&limit=10"
           "family": "barbell",
           "numItems": null
         }
-      ]
+      ],
+      "links": {
+        "page": "https://kinetic.place/exercises/d586b5aa-c2f4-4cb5-8038-d10b03c3b763"
+      }
     }
   ],
   "total": 908,
@@ -326,6 +329,9 @@ curl "http://localhost:8787/v1/levels"
     "channel": "Jeff Nippard",
     "channelUrl": "https://www.youtube.com/@JeffNippard",
     "thumbnailUrl": "https://i.ytimg.com/vi/hWbUlkb5Ms4/hqdefault.jpg"
+  },
+  "links": {
+    "page": "https://kinetic.place/exercises/d586b5aa-c2f4-4cb5-8038-d10b03c3b763"
   }
 }
 ```
@@ -346,6 +352,7 @@ curl "http://localhost:8787/v1/levels"
 | `muscleGroups`    | `MuscleGroup[]`        | Muscles targeted with role classification                                                                                                                                                      |
 | `equipment`       | `Equipment[]`          | Required equipment                                                                                                                                                                             |
 | `youtube`         | `YouTubeVideo \| null` | A YouTube video: `url`, `videoId`, `title`, `channel`, `channelUrl`, `thumbnailUrl` ([details](https://github.com/kinetic-place/exercises-json#youtube-video-object)). `null` when it has none |
+| `links.page`      | `string`               | The exercise's page on [Kinetic.place](https://kinetic.place), where creators license videos of it for apps. Added by the API: the dataset files don't have it                                 |
 
 **Categories:** `strength` · `stretching` · `cardio` · `plyometrics` · `powerlifting` · `olympicWeightlifting` · `strongman`
 
